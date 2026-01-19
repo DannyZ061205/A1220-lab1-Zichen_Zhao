@@ -7,6 +7,27 @@ from . import file_io as io_mod
 from . import gpt
 
 
+def sanitize_amount(amount):
+    """Clean and convert the amount field to a float.
+
+    Removes currency symbols (like $) and converts the string to a float.
+
+    Args:
+        amount: The amount string from the receipt (e.g., "$43.83" or "70.74").
+
+    Returns:
+        The amount as a float, or None if the amount is invalid or missing.
+    """
+    if amount is None:
+        return None
+    # Remove $ symbol if present and convert to float
+    cleaned = str(amount).replace("$", "").strip()
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
 def process_directory(dirpath):
     """Process all receipt images in a directory and extract information.
 
@@ -20,6 +41,8 @@ def process_directory(dirpath):
     for name, path in io_mod.list_files(dirpath):
         image_b64 = io_mod.encode_file(path)
         data = gpt.extract_receipt_info(image_b64)
+        # Sanitize the amount field
+        data["amount"] = sanitize_amount(data.get("amount"))
         results[name] = data
     return results
 
