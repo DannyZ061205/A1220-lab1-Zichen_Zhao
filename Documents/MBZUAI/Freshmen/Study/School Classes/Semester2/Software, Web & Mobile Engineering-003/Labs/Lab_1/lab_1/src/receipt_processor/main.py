@@ -3,6 +3,7 @@
 
 import json
 import argparse
+from datetime import datetime
 from . import file_io as io_mod
 from . import gpt
 
@@ -45,6 +46,58 @@ def process_directory(dirpath):
         data["amount"] = sanitize_amount(data.get("amount"))
         results[name] = data
     return results
+
+
+def parse_date(date_str):
+    """Parse a date string in YYYY-MM-DD format.
+
+    Args:
+        date_str: A date string in YYYY-MM-DD format.
+
+    Returns:
+        A datetime object, or None if parsing fails.
+    """
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        return None
+
+
+def calculate_expenses(data, start_date, end_date):
+    """Calculate total expenses within a date range.
+
+    Args:
+        data: Dictionary mapping filenames to receipt data.
+        start_date: Start date string in YYYY-MM-DD format.
+        end_date: End date string in YYYY-MM-DD format.
+
+    Returns:
+        Total expenses as a float.
+    """
+    start = parse_date(start_date)
+    end = parse_date(end_date)
+
+    if start is None or end is None:
+        return 0.0
+
+    total = 0.0
+    for receipt in data.values():
+        receipt_date = parse_date(receipt.get("date"))
+        amount = receipt.get("amount")
+
+        # Skip if date is invalid or outside range
+        if receipt_date is None:
+            continue
+        if receipt_date < start or receipt_date > end:
+            continue
+
+        # Skip if amount is invalid
+        if amount is None or not isinstance(amount, (int, float)):
+            continue
+
+        total += amount
+
+    return total
 
 
 def aggregate_by_category(data):
@@ -105,11 +158,15 @@ def main():
     Arguments:
         dirpath: Path to directory containing receipt images.
         --print: If provided, print the results as formatted JSON.
+        --expenses: If provided with start and end dates (YYYY-MM-DD),
+            calculate total expenses within that date range.
         --plot: If provided, generate a pie chart of expenses by category.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("dirpath")
     parser.add_argument("--print", action="store_true")
+    parser.add_argument("--expenses", nargs=2, metavar=("START", "END"),
+                        help="Calculate expenses between START and END dates (YYYY-MM-DD)")
     parser.add_argument("--plot", action="store_true",
                         help="Generate a pie chart of expenses by category")
     args = parser.parse_args()
@@ -119,9 +176,12 @@ def main():
     if args.print:
         print(json.dumps(data, indent=2))
 
+    if args.expenses:
+        total = calculate_expenses(data, args.expenses[0], args.expenses[1])
+        print(f"Total expenses from {args.expenses[0]} to {args.expenses[1]}: ${total:.2f}")
+
     if args.plot:
         plot_expenses_by_category(data)
 
 if __name__ == "__main__":
     main()
-
