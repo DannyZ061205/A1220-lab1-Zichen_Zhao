@@ -6,6 +6,15 @@ A command-line application that processes receipt images using OpenAI's GPT-4.1-
 
 - Extracts date, amount, vendor name, and category from receipt images
 - Outputs results as JSON
+- Generates pie chart visualization of expenses by category
+
+## Visualization
+
+The `--plot` option generates a pie chart showing expenses grouped by category. I chose a pie chart because:
+
+1. **Intuitive representation**: Pie charts clearly show the proportion of each category relative to the total
+2. **Easy comparison**: Users can quickly see which categories consume the most budget
+3. **Familiar format**: Most users are familiar with pie charts for expense breakdowns
 
 ## Setup
 
