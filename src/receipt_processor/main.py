@@ -12,6 +12,8 @@ def sanitize_amount(amount):
     """Clean and convert the amount field to a float.
 
     Removes currency symbols (like $) and converts the string to a float.
+    This function handles inconsistent LLM output where amounts may include
+    currency symbols or be returned as strings instead of numbers.
 
     Args:
         amount: The amount string from the receipt (e.g., "$43.83" or "70.74").
